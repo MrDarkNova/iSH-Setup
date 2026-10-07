@@ -1,19 +1,7 @@
 #!/bin/sh
-# ──────────────────────────────────────────────────────────────
-#  iSH-Setup  ·  a cool-looking iSH, one paste
-#  by Victor Kumba (DarkNova)  ·  https://mrdarknova.com
-#
-#  Install:
-#    apk add --no-cache curl ca-certificates && \
-#    curl -fsSL https://raw.githubusercontent.com/MrDarkNova/iSH-Setup/main/setup.sh | sh
-#
-#  Flags (append after `sh -s --`):
-#    --lite        skip dev tools (node, python, ssh, tmux, htop)
-#    --uninstall   remove the Nova look (packages are left alone)
-# ──────────────────────────────────────────────────────────────
 set -u
 
-NOVA_VERSION="1.0.0"
+NOVA_VERSION="1.0.2"
 NOVA_REPO="MrDarkNova/iSH-Setup"
 NOVA_SETUP_URL="https://raw.githubusercontent.com/${NOVA_REPO}/main/setup.sh"
 
@@ -35,9 +23,8 @@ for arg in "$@"; do
 done
 [ "${NOVA_LITE:-0}" = "1" ] && LITE=1
 
-# ── colours (only when stdout is a terminal) ──────────────────
 if [ -t 1 ]; then
-  V1=$(printf '\033[38;5;99m');  V2=$(printf '\033[38;5;135m'); V3=$(printf '\033[38;5;134m')
+  V1=$(printf '\033[38;5;99m');  V2=$(printf '\033[38;5;141m'); V3=$(printf '\033[38;5;183m')
   GR=$(printf '\033[38;5;114m'); RD=$(printf '\033[38;5;203m'); YL=$(printf '\033[38;5;221m')
   DM=$(printf '\033[38;5;60m');  BD=$(printf '\033[1m');        RS=$(printf '\033[0m')
 else
@@ -58,7 +45,6 @@ splash() {
   printf '  %s╰──────────────────────────────╯%s\n' "$V1" "$RS"
 }
 
-# Replace (or add) a marked block in a file, reading the new block from stdin.
 inject() {
   f=$1
   touch "$f"
@@ -90,7 +76,15 @@ install_group() {
   return 0
 }
 
-# ── uninstall ─────────────────────────────────────────────────
+run_banner() {
+  if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then
+    timeout 3 sh "$NOVA_DIR/banner.sh" </dev/null
+  else
+    sh "$NOVA_DIR/banner.sh" </dev/null
+  fi
+  return 0
+}
+
 if [ "$UNINSTALL" = "1" ]; then
   splash
   for f in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.inputrc" "$HOME/.nanorc"; do
@@ -102,7 +96,6 @@ if [ "$UNINSTALL" = "1" ]; then
   exit 0
 fi
 
-# ── 1. preflight ──────────────────────────────────────────────
 splash
 : > "$LOG" 2>/dev/null || LOG=/dev/null
 step "Checking environment"
@@ -110,7 +103,6 @@ command -v apk >/dev/null 2>&1 || die "apk not found. This script is made for iS
 ok "Alpine detected"
 [ -d /proc/ish ] && ok "running inside iSH" || warn "iSH not detected, continuing anyway"
 
-# ── 2. package index ──────────────────────────────────────────
 step "Updating package index"
 if apk update >>"$LOG" 2>&1; then
   ok "index up to date"
@@ -119,11 +111,9 @@ else
   die "apk update failed. Check your connection and try again."
 fi
 
-# ── 3. core tools ─────────────────────────────────────────────
 step "Installing core tools"
 install_group "core" bash git curl wget ca-certificates ncurses nano tzdata jq
 
-# ── 4. dev tools ──────────────────────────────────────────────
 step "Installing dev tools"
 if [ "$LITE" = "1" ]; then
   warn "skipped (--lite)"
@@ -131,26 +121,22 @@ else
   install_group "dev" nodejs npm python3 py3-pip openssh-client tmux htop
 fi
 
-# ── 5. the Nova look ──────────────────────────────────────────
 step "Applying the Nova look"
 mkdir -p "$NOVA_DIR" || die "cannot create $NOVA_DIR"
 
-# --- config (kept if it already exists, so your edits survive updates)
 if [ ! -f "$NOVA_DIR/config" ]; then
   cat > "$NOVA_DIR/config" <<EOF
-# Nova settings. Edit freely; run \`nova config\` to open this file.
 NOVA_NAME="${NOVA_NAME:-Victor}"
 NOVA_TZ="${NOVA_TZ:-Africa/Lagos}"
 NOVA_CITY="${NOVA_CITY:-Kaduna}"
 NOVA_SITE="${NOVA_SITE:-mrdarknova.com}"
 NOVA_GITHUB="${NOVA_GITHUB:-github.com/MrDarkNova}"
-NOVA_BANNER="${NOVA_BANNER:-1}"   # set to 0 to turn the opening banner off
 NOVA_SETUP_URL="$NOVA_SETUP_URL"
+NOVA_BANNER="1"
 EOF
 fi
 printf '%s\n' "$NOVA_VERSION" > "$NOVA_DIR/VERSION"
 
-# --- ASCII art (swap this file for your own, up to ~38 columns wide)
 cat > "$NOVA_DIR/art.txt" <<'NOVA_ART'
  ___     _    ___  _  __
 |   \   /_\  | _ \| |/ /
@@ -162,42 +148,76 @@ cat > "$NOVA_DIR/art.txt" <<'NOVA_ART'
 |_|\_| \___/   \_/  /_/ \_\
 NOVA_ART
 
-# --- banner (plain POSIX sh, no dependencies)
 cat > "$NOVA_DIR/banner.sh" <<'NOVA_BANNER'
 #!/bin/sh
-# Nova banner: shown when iSH opens. `nova` runs it again.
 NOVA_DIR="${NOVA_DIR:-$HOME/.nova}"
 [ -f "$NOVA_DIR/config" ] && . "$NOVA_DIR/config"
 : "${NOVA_NAME:=friend}" "${NOVA_SITE:=mrdarknova.com}" "${NOVA_GITHUB:=github.com/MrDarkNova}" "${NOVA_CITY:=Kaduna}"
+
+if [ "${1:-}" = "--disk" ]; then
+  if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then
+    out=$(timeout 3 df -h / 2>/dev/null)
+  else
+    out=$(df -h / 2>/dev/null)
+  fi
+  printf '%s\n' "$out" | {
+    read -r _
+    read -r _ s u _
+    if [ -n "$s" ] && [ -n "$u" ]; then printf 'disk %s/%s\n' "$u" "$s" > "$NOVA_DIR/disk"; fi
+  }
+  exit 0
+fi
+
 [ -n "${NOVA_TZ:-}" ] && export TZ="$NOVA_TZ"
 
 E=$(printf '\033')
-RS="${E}[0m"; BD="${E}[1m"
-col() { printf '%s[38;5;%sm' "$E" "$1"; }
-nap() { [ "${NOVA_FAST:-0}" = "1" ] || sleep 0.03 2>/dev/null || :; }
+RS="${E}[0m"
+BD="${E}[1m"
+K60="${E}[38;5;60m"
+K99="${E}[38;5;99m"
+K141="${E}[38;5;141m"
+K183="${E}[38;5;183m"
+K219="${E}[38;5;219m"
+
+nap() {
+  if [ "${NOVA_ANIM:-0}" = "1" ]; then sleep 0.03 2>/dev/null || :; fi
+  return 0
+}
 
 art() {
   if [ ! -r "$NOVA_DIR/art.txt" ]; then
-    printf '  %sD A R K N O V A%s\n' "$(col 135)" "$RS"
-    return
+    printf '  %sD A R K N O V A%s\n' "$K141" "$RS"
+    return 0
   fi
-  set -- 57 93 99 135 134 171 170 169
+  set -- 57 93 99 135 141 177 183 219
   while IFS= read -r line; do
-    printf '  %s%s%s\n' "$(col "$1")" "$line" "$RS"
+    printf '  %s[38;5;%sm%s%s\n' "$E" "$1" "$line" "$RS"
     [ $# -gt 1 ] && shift
     nap
   done < "$NOVA_DIR/art.txt"
+  return 0
 }
 
-row() { printf '  %s◆%s %s%-4s%s %s\n' "$(col 135)" "$RS" "$(col 60)" "$1" "$RS" "$2"; nap; }
+row() { printf '  %s◆%s %s%-4s%s %s\n' "$K141" "$RS" "$K60" "$1" "$RS" "$2"; nap; }
+
+join() {
+  out=""
+  for p in "$@"; do
+    if [ -n "$p" ]; then
+      if [ -n "$out" ]; then out="$out · "; fi
+      out="$out$p"
+    fi
+  done
+}
 
 if [ "${1:-}" = "--art" ]; then art; exit 0; fi
 
-tmo() { if command -v timeout >/dev/null 2>&1; then timeout 2 "$@"; else "$@"; fi; }
-join() { out=""; for p in "$@"; do [ -n "$p" ] && { [ -n "$out" ] && out="$out · "; out="$out$p"; }; done; printf '%s' "$out"; }
+d=$(date '+%H|%S|%a %d %b · %H:%M' 2>/dev/null)
+hr=${d%%|*}
+rest=${d#*|}
+sec=${rest%%|*}
+dstr=${rest#*|}
 
-# greeting by hour
-hr=$(date +%H 2>/dev/null)
 case $hr in
   0[0-4])        greet="Late-night session" ;;
   0[5-9]|1[01])  greet="Good morning" ;;
@@ -205,33 +225,58 @@ case $hr in
   *)             greet="Good evening" ;;
 esac
 
-# art goes up first, so something always appears even if a probe below is slow
-printf '\n'
-art
-printf '  %s──────────────────────────────%s\n' "$(col 60)" "$RS"
-printf '  %s%s,%s %s%s%s %s✦%s\n' "$(col 134)" "$greet" "$RS" "$BD" "$NOVA_NAME" "$RS" "$(col 169)" "$RS"
-printf '  %s%s%s\n\n' "$(col 60)" "$(date '+%a %d %b · %H:%M' 2>/dev/null)" "$RS"
-
-# system facts: every probe is optional and time-boxed (2s), so nothing can stall the banner
 os=""
 if [ -r /etc/os-release ]; then
-  os=$(. /etc/os-release 2>/dev/null; printf '%s %s' "${NAME:-Linux}" "${VERSION_ID:-}")
+  osn=""; osv=""
+  while IFS='=' read -r k v; do
+    case $k in
+      NAME)       osn=$v ;;
+      VERSION_ID) osv=$v ;;
+    esac
+  done < /etc/os-release
+  osn=${osn#\"}; osn=${osn%\"}
+  osv=${osv#\"}; osv=${osv%\"}
+  os="${osn:-Linux}${osv:+ $osv}"
 fi
-up=""
-secs=$(tmo cat /proc/uptime 2>/dev/null)
-secs=${secs%%.*}
-case $secs in
-  ''|*[!0-9]*) ;;
-  *)
-    dd=$((secs / 86400)); hh=$((secs % 86400 / 3600)); mm=$((secs % 3600 / 60))
-    if [ "$dd" -gt 0 ]; then up="up ${dd}d ${hh}h"
-    elif [ "$hh" -gt 0 ]; then up="up ${hh}h ${mm}m"
-    else up="up ${mm}m"; fi ;;
-esac
-mem=$(tmo awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} /^MemFree:/{f=$2} END{if(a=="")a=f; if(t>0) printf "%dM/%dM", (t-a)/1024, t/1024}' /proc/meminfo 2>/dev/null)
-disk=$(tmo df -h / 2>/dev/null | awk 'NR==2 && $2!="" {print "disk " $3 "/" $2}')
 
-case $(( 1$(date +%S 2>/dev/null || echo 00) % 6 )) in
+up=""
+if [ -r /proc/uptime ]; then
+  read -r secs _ < /proc/uptime
+  secs=${secs%%.*}
+  case $secs in
+    ''|*[!0-9]*) ;;
+    *)
+      dd=$((secs / 86400)); hh=$((secs % 86400 / 3600)); mm=$((secs % 3600 / 60))
+      if [ "$dd" -gt 0 ]; then up="up ${dd}d ${hh}h"
+      elif [ "$hh" -gt 0 ]; then up="up ${hh}h ${mm}m"
+      else up="up ${mm}m"; fi ;;
+  esac
+fi
+
+mem=""
+if [ -r /proc/meminfo ]; then
+  mt=""; ma=""; mf=""
+  while read -r k v _; do
+    case $k in
+      MemTotal:)     mt=$v ;;
+      MemAvailable:) ma=$v ;;
+      MemFree:)      mf=$v ;;
+    esac
+    if [ -n "$mt" ] && [ -n "$ma" ]; then break; fi
+  done < /proc/meminfo
+  [ -z "$ma" ] && ma=$mf
+  case $mt in ''|*[!0-9]*) mt="" ;; esac
+  case $ma in ''|*[!0-9]*) ma="" ;; esac
+  if [ -n "$mt" ] && [ -n "$ma" ] && [ "$mt" -gt 0 ]; then
+    mem="$(( (mt - ma) / 1024 ))M/$(( mt / 1024 ))M"
+  fi
+fi
+
+disk=""
+[ -r "$NOVA_DIR/disk" ] && read -r disk < "$NOVA_DIR/disk"
+
+case $sec in [0-9][0-9]) ;; *) sec=00 ;; esac
+case $(( 1$sec % 6 )) in
   0) tip="update    refresh all packages" ;;
   1) tip="serve     http server on :8000" ;;
   2) tip="gs        git status, short" ;;
@@ -240,18 +285,25 @@ case $(( 1$(date +%S 2>/dev/null || echo 00) % 6 )) in
   *) tip="nova      show this screen again" ;;
 esac
 
-sys=$(join "$os" "$up")
-ram=$(join "$mem" "$disk")
+join "$os" "$up"; sys=$out
+join "$mem" "$disk"; ram=$out
+
+printf '\n'
+art
+printf '  %s──────────────────────────────%s\n' "$K60" "$RS"
+printf '  %s%s,%s %s%s%s %s✦%s\n' "$K183" "$greet" "$RS" "$BD" "$NOVA_NAME" "$RS" "$K219" "$RS"
+printf '  %s%s%s\n\n' "$K60" "$dstr" "$RS"
 [ -n "$sys" ] && row sys "$sys"
 [ -n "$ram" ] && row ram "$ram"
 row web "$NOVA_SITE"
 row git "$NOVA_GITHUB"
-printf '\n  %stip ›%s %s%s%s\n\n' "$(col 99)" "$RS" "$(col 134)" "$tip" "$RS"
+printf '\n  %stip ›%s %s%s%s\n\n' "$K99" "$RS" "$K183" "$tip" "$RS"
+
+(sh "$NOVA_DIR/banner.sh" --disk </dev/null >/dev/null 2>&1 &)
+exit 0
 NOVA_BANNER
 
-# --- aliases + helpers
 cat > "$NOVA_DIR/aliases.sh" <<'NOVA_ALIASES'
-# Nova aliases: safe for bash and ash
 if ls --color=auto -d / >/dev/null 2>&1; then _nls='ls --color=auto'; else _nls='ls'; fi
 alias ls="$_nls"
 alias ll="$_nls -lAh"
@@ -275,6 +327,21 @@ mkcd()    { mkdir -p "$1" && cd "$1"; }
 myip()    { curl -fsS https://ifconfig.me; echo; }
 weather() { curl -fsS "https://wttr.in/${1:-${NOVA_CITY:-Kaduna}}?0"; }
 
+__nova_show() {
+  if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then
+    timeout 3 sh "$HOME/.nova/banner.sh" </dev/null
+  else
+    sh "$HOME/.nova/banner.sh" </dev/null
+  fi
+  return 0
+}
+
+clear() {
+  printf '\033[H\033[2J'
+  if [ "${NOVA_BANNER:-1}" = "1" ]; then __nova_show; fi
+  return 0
+}
+
 nova() {
   case "${1:-}" in
     update|up)  curl -fsSL "${NOVA_SETUP_URL:-https://raw.githubusercontent.com/MrDarkNova/iSH-Setup/main/setup.sh}" | sh ;;
@@ -285,14 +352,12 @@ nova() {
       printf 'nova update     re-run the installer\n'
       printf 'nova config     edit name / timezone / links\n'
       printf 'nova uninstall  remove the Nova look\n' ;;
-    *)          sh "$HOME/.nova/banner.sh" ;;
+    *)          __nova_show ;;
   esac
 }
 NOVA_ALIASES
 
-# --- prompt (bash)
 cat > "$NOVA_DIR/prompt.sh" <<'NOVA_PROMPT'
-# Nova prompt: two lines, git branch without forking git, red on failure
 HISTSIZE=5000
 HISTFILESIZE=10000
 HISTCONTROL=ignoredups:erasedups
@@ -319,7 +384,7 @@ __nova_prompt() {
   local ec=$?
   history -a 2>/dev/null
   __nova_branch
-  local v1='\[\e[38;5;99m\]' v2='\[\e[38;5;135m\]' v3='\[\e[38;5;134m\]'
+  local v1='\[\e[38;5;99m\]' v2='\[\e[38;5;141m\]' v3='\[\e[38;5;183m\]'
   local dm='\[\e[38;5;60m\]' rd='\[\e[38;5;203m\]' rs='\[\e[0m\]'
   local mark="$v3" br="" ex=""
   [ -n "$__nova_br" ] && br="${dm}─[${v3}⎇ ${__nova_br}${dm}]"
@@ -329,7 +394,6 @@ __nova_prompt() {
 PROMPT_COMMAND=__nova_prompt
 NOVA_PROMPT
 
-# --- hook it all into the shell startup files
 inject "$HOME/.bashrc" <<'NOVA_RC'
 # >>> nova-ish >>>
 case $- in
@@ -340,15 +404,9 @@ case $- in
     export EDITOR="${EDITOR:-nano}"
     [ -f "$HOME/.nova/aliases.sh" ] && . "$HOME/.nova/aliases.sh"
     [ -f "$HOME/.nova/prompt.sh" ] && . "$HOME/.nova/prompt.sh"
-    if [ -z "${NOVA_SHOWN:-}" ] && [ "${NOVA_BANNER:-1}" != "0" ]; then
+    if [ -z "${NOVA_SHOWN:-}" ]; then
       export NOVA_SHOWN=1
-      [ -t 1 ] && printf '\033[H\033[2J'
-      # timeout keeps a slow probe from ever blocking startup
-      if command -v timeout >/dev/null 2>&1; then
-        timeout 6 sh "$HOME/.nova/banner.sh"
-      else
-        sh "$HOME/.nova/banner.sh"
-      fi
+      if [ -t 1 ]; then clear; fi
     fi
     ;;
 esac
@@ -361,7 +419,6 @@ inject "$HOME/.bash_profile" <<'NOVA_BP'
 # <<< nova-ish <<<
 NOVA_BP
 
-# iSH logs in with ash, so hand over to bash when it is installed
 inject "$HOME/.profile" <<'NOVA_PROFILE'
 # >>> nova-ish >>>
 if [ -z "${BASH_VERSION:-}" ] && [ -x /bin/bash ] && [ -t 0 ]; then
@@ -390,12 +447,10 @@ include "/usr/share/nano/*.nanorc"
 NOVA_NANORC
 ok "banner, prompt, aliases and config installed"
 
-# clean login: drop the stock welcome text
 if [ -w "$NOVA_ETC/motd" ] || [ ! -e "$NOVA_ETC/motd" ]; then
   : > "$NOVA_ETC/motd" 2>/dev/null && ok "default welcome message cleared"
 fi
 
-# sensible git defaults (never touches your name or email)
 if command -v git >/dev/null 2>&1; then
   git config --global init.defaultBranch main
   git config --global pull.rebase false
@@ -404,12 +459,7 @@ if command -v git >/dev/null 2>&1; then
   ok "git defaults set"
 fi
 
-# ── done ──────────────────────────────────────────────────────
-if command -v timeout >/dev/null 2>&1; then
-  timeout 8 sh "$NOVA_DIR/banner.sh" </dev/null
-else
-  sh "$NOVA_DIR/banner.sh" </dev/null
-fi
+run_banner
 printf '  %s✔ All set.%s Close and reopen iSH, or run: %sexec bash -l%s\n' "$GR" "$RS" "$V3" "$RS"
 if command -v git >/dev/null 2>&1 && [ -z "$(git config --global user.name 2>/dev/null)" ]; then
   printf '  %sgit identity not set yet:%s\n' "$DM" "$RS"
