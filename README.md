@@ -71,11 +71,12 @@ NOVA_TZ="Africa/Lagos"
 NOVA_CITY="Kaduna"
 NOVA_SITE="mrdarknova.com"
 NOVA_GITHUB="github.com/MrDarkNova"
+NOVA_BANNER="1"   # 0 turns the opening banner off
 ```
 
 You can also set them before installing, for example `NOVA_NAME=Sam sh setup.sh`. Your config is kept when you update. To use your own ASCII art, replace `~/.nova/art.txt` (up to 8 gradient colour steps; about 38 columns fits a phone in portrait).
 
-Set `NOVA_FAST=1` to skip the small reveal animation.
+Set `NOVA_FAST=1` to skip the small reveal animation. The colours are mid-tone purples, so they read on light and dark terminal themes. If the banner ever stalls, press `^` then `c`, and set `NOVA_BANNER="0"` in `~/.nova/config`.
 
 ## Notes
 

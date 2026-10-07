@@ -37,7 +37,7 @@ done
 
 # ── colours (only when stdout is a terminal) ──────────────────
 if [ -t 1 ]; then
-  V1=$(printf '\033[38;5;99m');  V2=$(printf '\033[38;5;141m'); V3=$(printf '\033[38;5;183m')
+  V1=$(printf '\033[38;5;99m');  V2=$(printf '\033[38;5;135m'); V3=$(printf '\033[38;5;134m')
   GR=$(printf '\033[38;5;114m'); RD=$(printf '\033[38;5;203m'); YL=$(printf '\033[38;5;221m')
   DM=$(printf '\033[38;5;60m');  BD=$(printf '\033[1m');        RS=$(printf '\033[0m')
 else
@@ -144,6 +144,7 @@ NOVA_TZ="${NOVA_TZ:-Africa/Lagos}"
 NOVA_CITY="${NOVA_CITY:-Kaduna}"
 NOVA_SITE="${NOVA_SITE:-mrdarknova.com}"
 NOVA_GITHUB="${NOVA_GITHUB:-github.com/MrDarkNova}"
+NOVA_BANNER="${NOVA_BANNER:-1}"   # set to 0 to turn the opening banner off
 NOVA_SETUP_URL="$NOVA_SETUP_URL"
 EOF
 fi
@@ -167,7 +168,7 @@ cat > "$NOVA_DIR/banner.sh" <<'NOVA_BANNER'
 # Nova banner: shown when iSH opens. `nova` runs it again.
 NOVA_DIR="${NOVA_DIR:-$HOME/.nova}"
 [ -f "$NOVA_DIR/config" ] && . "$NOVA_DIR/config"
-: "${NOVA_NAME:=friend}" "${NOVA_SITE:=mrdarknova.com}" "${NOVA_GITHUB:=github.com/MrDarkNova}"
+: "${NOVA_NAME:=friend}" "${NOVA_SITE:=mrdarknova.com}" "${NOVA_GITHUB:=github.com/MrDarkNova}" "${NOVA_CITY:=Kaduna}"
 [ -n "${NOVA_TZ:-}" ] && export TZ="$NOVA_TZ"
 
 E=$(printf '\033')
@@ -177,10 +178,10 @@ nap() { [ "${NOVA_FAST:-0}" = "1" ] || sleep 0.03 2>/dev/null || :; }
 
 art() {
   if [ ! -r "$NOVA_DIR/art.txt" ]; then
-    printf '  %sD A R K N O V A%s\n' "$(col 141)" "$RS"
+    printf '  %sD A R K N O V A%s\n' "$(col 135)" "$RS"
     return
   fi
-  set -- 57 93 99 135 141 177 183 219
+  set -- 57 93 99 135 134 171 170 169
   while IFS= read -r line; do
     printf '  %s%s%s\n' "$(col "$1")" "$line" "$RS"
     [ $# -gt 1 ] && shift
@@ -188,9 +189,12 @@ art() {
   done < "$NOVA_DIR/art.txt"
 }
 
-row() { printf '  %s◆%s %s%-4s%s %s\n' "$(col 141)" "$RS" "$(col 60)" "$1" "$RS" "$2"; nap; }
+row() { printf '  %s◆%s %s%-4s%s %s\n' "$(col 135)" "$RS" "$(col 60)" "$1" "$RS" "$2"; nap; }
 
 if [ "${1:-}" = "--art" ]; then art; exit 0; fi
+
+tmo() { if command -v timeout >/dev/null 2>&1; then timeout 2 "$@"; else "$@"; fi; }
+join() { out=""; for p in "$@"; do [ -n "$p" ] && { [ -n "$out" ] && out="$out · "; out="$out$p"; }; done; printf '%s' "$out"; }
 
 # greeting by hour
 hr=$(date +%H 2>/dev/null)
@@ -201,31 +205,31 @@ case $hr in
   *)             greet="Good evening" ;;
 esac
 
-# system facts (every one of these is optional)
+# art goes up first, so something always appears even if a probe below is slow
+printf '\n'
+art
+printf '  %s──────────────────────────────%s\n' "$(col 60)" "$RS"
+printf '  %s%s,%s %s%s%s %s✦%s\n' "$(col 134)" "$greet" "$RS" "$BD" "$NOVA_NAME" "$RS" "$(col 169)" "$RS"
+printf '  %s%s%s\n\n' "$(col 60)" "$(date '+%a %d %b · %H:%M' 2>/dev/null)" "$RS"
+
+# system facts: every probe is optional and time-boxed (2s), so nothing can stall the banner
 os=""
 if [ -r /etc/os-release ]; then
   os=$(. /etc/os-release 2>/dev/null; printf '%s %s' "${NAME:-Linux}" "${VERSION_ID:-}")
 fi
 up=""
-if [ -r /proc/uptime ]; then
-  read -r secs _ < /proc/uptime
-  secs=${secs%%.*}
-  case $secs in
-    ''|*[!0-9]*) ;;
-    *)
-      dd=$((secs / 86400)); hh=$((secs % 86400 / 3600)); mm=$((secs % 3600 / 60))
-      if [ "$dd" -gt 0 ]; then up="up ${dd}d ${hh}h"
-      elif [ "$hh" -gt 0 ]; then up="up ${hh}h ${mm}m"
-      else up="up ${mm}m"; fi ;;
-  esac
-fi
-mem=""
-if [ -r /proc/meminfo ]; then
-  mem=$(awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} /^MemFree:/{f=$2} END{if(a=="")a=f; if(t>0) printf "%dM/%dM", (t-a)/1024, t/1024}' /proc/meminfo 2>/dev/null)
-fi
-disk=$(df -h / 2>/dev/null | awk 'NR==2 && $2!="" {print "disk " $3 "/" $2}')
-
-join() { out=""; for p in "$@"; do [ -n "$p" ] && { [ -n "$out" ] && out="$out · "; out="$out$p"; }; done; printf '%s' "$out"; }
+secs=$(tmo cat /proc/uptime 2>/dev/null)
+secs=${secs%%.*}
+case $secs in
+  ''|*[!0-9]*) ;;
+  *)
+    dd=$((secs / 86400)); hh=$((secs % 86400 / 3600)); mm=$((secs % 3600 / 60))
+    if [ "$dd" -gt 0 ]; then up="up ${dd}d ${hh}h"
+    elif [ "$hh" -gt 0 ]; then up="up ${hh}h ${mm}m"
+    else up="up ${mm}m"; fi ;;
+esac
+mem=$(tmo awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} /^MemFree:/{f=$2} END{if(a=="")a=f; if(t>0) printf "%dM/%dM", (t-a)/1024, t/1024}' /proc/meminfo 2>/dev/null)
+disk=$(tmo df -h / 2>/dev/null | awk 'NR==2 && $2!="" {print "disk " $3 "/" $2}')
 
 case $(( 1$(date +%S 2>/dev/null || echo 00) % 6 )) in
   0) tip="update    refresh all packages" ;;
@@ -236,18 +240,13 @@ case $(( 1$(date +%S 2>/dev/null || echo 00) % 6 )) in
   *) tip="nova      show this screen again" ;;
 esac
 
-printf '\n'
-art
-printf '  %s──────────────────────────────%s\n' "$(col 60)" "$RS"
-printf '  %s%s,%s %s%s%s %s✦%s\n' "$(col 183)" "$greet" "$RS" "$BD" "$NOVA_NAME" "$RS" "$(col 219)" "$RS"
-printf '  %s%s%s\n\n' "$(col 60)" "$(date '+%a %d %b · %H:%M' 2>/dev/null)" "$RS"
 sys=$(join "$os" "$up")
 ram=$(join "$mem" "$disk")
 [ -n "$sys" ] && row sys "$sys"
 [ -n "$ram" ] && row ram "$ram"
 row web "$NOVA_SITE"
 row git "$NOVA_GITHUB"
-printf '\n  %stip ›%s %s%s%s\n\n' "$(col 99)" "$RS" "$(col 183)" "$tip" "$RS"
+printf '\n  %stip ›%s %s%s%s\n\n' "$(col 99)" "$RS" "$(col 134)" "$tip" "$RS"
 NOVA_BANNER
 
 # --- aliases + helpers
@@ -320,7 +319,7 @@ __nova_prompt() {
   local ec=$?
   history -a 2>/dev/null
   __nova_branch
-  local v1='\[\e[38;5;99m\]' v2='\[\e[38;5;141m\]' v3='\[\e[38;5;183m\]'
+  local v1='\[\e[38;5;99m\]' v2='\[\e[38;5;135m\]' v3='\[\e[38;5;134m\]'
   local dm='\[\e[38;5;60m\]' rd='\[\e[38;5;203m\]' rs='\[\e[0m\]'
   local mark="$v3" br="" ex=""
   [ -n "$__nova_br" ] && br="${dm}─[${v3}⎇ ${__nova_br}${dm}]"
@@ -341,10 +340,15 @@ case $- in
     export EDITOR="${EDITOR:-nano}"
     [ -f "$HOME/.nova/aliases.sh" ] && . "$HOME/.nova/aliases.sh"
     [ -f "$HOME/.nova/prompt.sh" ] && . "$HOME/.nova/prompt.sh"
-    if [ -z "${NOVA_SHOWN:-}" ]; then
+    if [ -z "${NOVA_SHOWN:-}" ] && [ "${NOVA_BANNER:-1}" != "0" ]; then
       export NOVA_SHOWN=1
       [ -t 1 ] && printf '\033[H\033[2J'
-      sh "$HOME/.nova/banner.sh"
+      # timeout keeps a slow probe from ever blocking startup
+      if command -v timeout >/dev/null 2>&1; then
+        timeout 6 sh "$HOME/.nova/banner.sh"
+      else
+        sh "$HOME/.nova/banner.sh"
+      fi
     fi
     ;;
 esac
@@ -401,7 +405,11 @@ if command -v git >/dev/null 2>&1; then
 fi
 
 # ── done ──────────────────────────────────────────────────────
-NOVA_FAST="${NOVA_FAST:-0}" sh "$NOVA_DIR/banner.sh"
+if command -v timeout >/dev/null 2>&1; then
+  timeout 8 sh "$NOVA_DIR/banner.sh" </dev/null
+else
+  sh "$NOVA_DIR/banner.sh" </dev/null
+fi
 printf '  %s✔ All set.%s Close and reopen iSH, or run: %sexec bash -l%s\n' "$GR" "$RS" "$V3" "$RS"
 if command -v git >/dev/null 2>&1 && [ -z "$(git config --global user.name 2>/dev/null)" ]; then
   printf '  %sgit identity not set yet:%s\n' "$DM" "$RS"
