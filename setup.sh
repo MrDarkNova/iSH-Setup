@@ -1,7 +1,7 @@
 #!/bin/sh
 set -u
 
-NOVA_VERSION="1.0.2"
+NOVA_VERSION="1.0.3"
 NOVA_REPO="MrDarkNova/iSH-Setup"
 NOVA_SETUP_URL="https://raw.githubusercontent.com/${NOVA_REPO}/main/setup.sh"
 
@@ -17,7 +17,7 @@ for arg in "$@"; do
     --lite) LITE=1 ;;
     --uninstall) UNINSTALL=1 ;;
     -h|--help)
-      printf 'iSH-Setup %s\n  --lite       skip dev tools\n  --uninstall  remove the Nova look\n' "$NOVA_VERSION"
+      printf 'ɪSH-Sᴇᴛᴜᴘ %s\n  --lite       ꜱᴋɪᴘ ᴅᴇᴠ ᴛᴏᴏʟꜱ\n  --uninstall  ʀᴇᴍᴏᴠᴇ ᴛʜᴇ Nᴏᴠᴀ ʟᴏᴏᴋ\n' "$NOVA_VERSION"
       exit 0 ;;
   esac
 done
@@ -41,7 +41,7 @@ die()  { fail "$1"; exit 1; }
 
 splash() {
   printf '\n  %s╭──────────────────────────────╮%s\n' "$V1" "$RS"
-  printf '  %s│%s  %s✦  iSH-Setup%s %s·%s by DarkNova  %s│%s\n' "$V1" "$RS" "$V3" "$RS" "$DM" "$RS" "$V1" "$RS"
+  printf '  %s│%s  %s✦  ɪSH-Sᴇᴛᴜᴘ%s %s·%s ʙʏ DᴀʀᴋNᴏᴠᴀ  %s│%s\n' "$V1" "$RS" "$V3" "$RS" "$DM" "$RS" "$V1" "$RS"
   printf '  %s╰──────────────────────────────╯%s\n' "$V1" "$RS"
 }
 
@@ -72,15 +72,15 @@ install_group() {
     if apk add --no-cache "$p" >>"$LOG" 2>&1; then good="$good $p"; else bad="$bad $p"; fi
   done
   [ -n "$good" ] && ok "$label:$good"
-  [ -n "$bad" ] && warn "skipped:$bad  (details: $LOG)"
+  [ -n "$bad" ] && warn "ꜱᴋɪᴘᴘᴇᴅ:$bad  (ᴅᴇᴛᴀɪʟꜱ: $LOG)"
   return 0
 }
 
 run_banner() {
   if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then
-    timeout 3 sh "$NOVA_DIR/banner.sh" </dev/null
+    { NOVA_TO=1 timeout 3 sh "$NOVA_DIR/banner.sh" </dev/null; } 2>/dev/null
   else
-    sh "$NOVA_DIR/banner.sh" </dev/null
+    NOVA_TO=0 sh "$NOVA_DIR/banner.sh" </dev/null
   fi
   return 0
 }
@@ -91,38 +91,39 @@ if [ "$UNINSTALL" = "1" ]; then
     strip_block "$f"
   done
   rm -rf "$NOVA_DIR"
-  printf '\n  %s✔%s Nova look removed. Packages were left in place.\n' "$GR" "$RS"
-  printf '  %sClose and reopen iSH to get your old prompt back.%s\n\n' "$DM" "$RS"
+  printf '\n  %s✔%s Nᴏᴠᴀ ʟᴏᴏᴋ ʀᴇᴍᴏᴠᴇᴅ. Pᴀᴄᴋᴀɢᴇꜱ ᴡᴇʀᴇ ʟᴇꜰᴛ ɪɴ ᴘʟᴀᴄᴇ.\n' "$GR" "$RS"
+  printf '  %sCʟᴏꜱᴇ ᴀɴᴅ ʀᴇᴏᴘᴇɴ ɪSH ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ᴏʟᴅ ᴘʀᴏᴍᴘᴛ ʙᴀᴄᴋ.%s\n\n' "$DM" "$RS"
   exit 0
 fi
 
 splash
 : > "$LOG" 2>/dev/null || LOG=/dev/null
-step "Checking environment"
-command -v apk >/dev/null 2>&1 || die "apk not found. This script is made for iSH (Alpine Linux)."
-ok "Alpine detected"
-[ -d /proc/ish ] && ok "running inside iSH" || warn "iSH not detected, continuing anyway"
+step "Cʜᴇᴄᴋɪɴɢ ᴇɴᴠɪʀᴏɴᴍᴇɴᴛ"
+command -v apk >/dev/null 2>&1 || die "ᴀᴘᴋ ɴᴏᴛ ꜰᴏᴜɴᴅ. Tʜɪꜱ ꜱᴄʀɪᴘᴛ ɪꜱ ᴍᴀᴅᴇ ꜰᴏʀ ɪSH (Aʟᴘɪɴᴇ Lɪɴᴜx)."
+ok "Aʟᴘɪɴᴇ ᴅᴇᴛᴇᴄᴛᴇᴅ"
+[ -d /proc/ish ] && ok "ʀᴜɴɴɪɴɢ ɪɴꜱɪᴅᴇ ɪSH" || warn "ɪSH ɴᴏᴛ ᴅᴇᴛᴇᴄᴛᴇᴅ, ᴄᴏɴᴛɪɴᴜɪɴɢ ᴀɴʏᴡᴀʏ"
 
-step "Updating package index"
+step "Uᴘᴅᴀᴛɪɴɢ ᴘᴀᴄᴋᴀɢᴇ ɪɴᴅᴇx"
 if apk update >>"$LOG" 2>&1; then
-  ok "index up to date"
+  ok "ɪɴᴅᴇx ᴜᴘ ᴛᴏ ᴅᴀᴛᴇ"
 else
   tail -n 4 "$LOG" 2>/dev/null
-  die "apk update failed. Check your connection and try again."
+  die "ᴀᴘᴋ ᴜᴘᴅᴀᴛᴇ ꜰᴀɪʟᴇᴅ. Cʜᴇᴄᴋ ʏᴏᴜʀ ᴄᴏɴɴᴇᴄᴛɪᴏɴ ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ."
 fi
 
-step "Installing core tools"
-install_group "core" bash git curl wget ca-certificates ncurses nano tzdata jq
+step "Iɴꜱᴛᴀʟʟɪɴɢ ᴄᴏʀᴇ ᴛᴏᴏʟꜱ"
+install_group "ᴄᴏʀᴇ" bash git curl wget ca-certificates ncurses nano tzdata jq
 
-step "Installing dev tools"
+step "Iɴꜱᴛᴀʟʟɪɴɢ ᴅᴇᴠ ᴛᴏᴏʟꜱ"
 if [ "$LITE" = "1" ]; then
-  warn "skipped (--lite)"
+  warn "ꜱᴋɪᴘᴘᴇᴅ (--lite)"
 else
-  install_group "dev" nodejs npm python3 py3-pip openssh-client tmux htop
+  install_group "ᴅᴇᴠ" nodejs npm python3 py3-pip openssh-client tmux htop
 fi
 
-step "Applying the Nova look"
-mkdir -p "$NOVA_DIR" || die "cannot create $NOVA_DIR"
+step "Aᴘᴘʟʏɪɴɢ ᴛʜᴇ Nᴏᴠᴀ ʟᴏᴏᴋ"
+mkdir -p "$NOVA_DIR" || die "ᴄᴀɴɴᴏᴛ ᴄʀᴇᴀᴛᴇ $NOVA_DIR"
+rm -f "$NOVA_DIR/slow"
 
 if [ ! -f "$NOVA_DIR/config" ]; then
   cat > "$NOVA_DIR/config" <<EOF
@@ -154,12 +155,17 @@ NOVA_DIR="${NOVA_DIR:-$HOME/.nova}"
 [ -f "$NOVA_DIR/config" ] && . "$NOVA_DIR/config"
 : "${NOVA_NAME:=friend}" "${NOVA_SITE:=mrdarknova.com}" "${NOVA_GITHUB:=github.com/MrDarkNova}" "${NOVA_CITY:=Kaduna}"
 
+HAS_TO="${NOVA_TO:-}"
+if [ -z "$HAS_TO" ]; then
+  if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then HAS_TO=1; else HAS_TO=0; fi
+fi
+
+bounded() {
+  if [ "$HAS_TO" = "1" ]; then timeout 2 "$@"; else "$@"; fi
+}
+
 if [ "${1:-}" = "--disk" ]; then
-  if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then
-    out=$(timeout 3 df -h / 2>/dev/null)
-  else
-    out=$(df -h / 2>/dev/null)
-  fi
+  out=$(bounded df -h / 2>/dev/null)
   printf '%s\n' "$out" | {
     read -r _
     read -r _ s u _
@@ -179,9 +185,42 @@ K141="${E}[38;5;141m"
 K183="${E}[38;5;183m"
 K219="${E}[38;5;219m"
 
-nap() {
-  if [ "${NOVA_ANIM:-0}" = "1" ]; then sleep 0.03 2>/dev/null || :; fi
-  return 0
+sc() {
+  SC=""
+  _s=$1
+  while [ -n "$_s" ]; do
+    _r=${_s#?}
+    _c=${_s%"$_r"}
+    _s=$_r
+    case $_c in
+      a) _c=ᴀ ;;
+      b) _c=ʙ ;;
+      c) _c=ᴄ ;;
+      d) _c=ᴅ ;;
+      e) _c=ᴇ ;;
+      f) _c=ꜰ ;;
+      g) _c=ɢ ;;
+      h) _c=ʜ ;;
+      i) _c=ɪ ;;
+      j) _c=ᴊ ;;
+      k) _c=ᴋ ;;
+      l) _c=ʟ ;;
+      m) _c=ᴍ ;;
+      n) _c=ɴ ;;
+      o) _c=ᴏ ;;
+      p) _c=ᴘ ;;
+      q) _c=ǫ ;;
+      r) _c=ʀ ;;
+      s) _c=ꜱ ;;
+      t) _c=ᴛ ;;
+      u) _c=ᴜ ;;
+      v) _c=ᴠ ;;
+      w) _c=ᴡ ;;
+      y) _c=ʏ ;;
+      z) _c=ᴢ ;;
+    esac
+    SC=$SC$_c
+  done
 }
 
 art() {
@@ -193,12 +232,11 @@ art() {
   while IFS= read -r line; do
     printf '  %s[38;5;%sm%s%s\n' "$E" "$1" "$line" "$RS"
     [ $# -gt 1 ] && shift
-    nap
   done < "$NOVA_DIR/art.txt"
   return 0
 }
 
-row() { printf '  %s◆%s %s%-4s%s %s\n' "$K141" "$RS" "$K60" "$1" "$RS" "$2"; nap; }
+row() { printf '  %s◆%s %s%s%s  %s\n' "$K141" "$RS" "$K60" "$1" "$RS" "$2"; }
 
 join() {
   out=""
@@ -212,64 +250,80 @@ join() {
 
 if [ "${1:-}" = "--art" ]; then art; exit 0; fi
 
-d=$(date '+%H|%S|%a %d %b · %H:%M' 2>/dev/null)
+SLOW=0
+if [ -f "$NOVA_DIR/slow" ] && [ -n "$(find "$NOVA_DIR/slow" -mmin -60 2>/dev/null)" ]; then SLOW=1; fi
+
+printf '\n'
+art
+printf '  %s──────────────────────────────%s\n' "$K60" "$RS"
+
+d=""
+if [ "$SLOW" = "0" ]; then
+  d=$(bounded date '+%H|%S|%a %d %b · %H:%M' 2>/dev/null)
+  if [ $? -ge 124 ]; then : > "$NOVA_DIR/slow"; SLOW=1; d=""; fi
+fi
 hr=${d%%|*}
 rest=${d#*|}
 sec=${rest%%|*}
 dstr=${rest#*|}
 
 case $hr in
-  0[0-4])        greet="Late-night session" ;;
-  0[5-9]|1[01])  greet="Good morning" ;;
-  1[2-6])        greet="Good afternoon" ;;
-  *)             greet="Good evening" ;;
+  '')            greet="Hᴇʟʟᴏ" ;;
+  0[0-4])        greet="Lᴀᴛᴇ-ɴɪɢʜᴛ ꜱᴇꜱꜱɪᴏɴ" ;;
+  0[5-9]|1[01])  greet="Gᴏᴏᴅ ᴍᴏʀɴɪɴɢ" ;;
+  1[2-6])        greet="Gᴏᴏᴅ ᴀꜰᴛᴇʀɴᴏᴏɴ" ;;
+  *)             greet="Gᴏᴏᴅ ᴇᴠᴇɴɪɴɢ" ;;
 esac
 
-os=""
-if [ -r /etc/os-release ]; then
-  osn=""; osv=""
-  while IFS='=' read -r k v; do
-    case $k in
-      NAME)       osn=$v ;;
-      VERSION_ID) osv=$v ;;
-    esac
-  done < /etc/os-release
-  osn=${osn#\"}; osn=${osn%\"}
-  osv=${osv#\"}; osv=${osv%\"}
-  os="${osn:-Linux}${osv:+ $osv}"
+sc "$NOVA_NAME"; name=$SC
+sc "$dstr"; dstrc=$SC
+printf '  %s%s,%s %s%s%s %s✦%s\n' "$K183" "$greet" "$RS" "$BD" "$name" "$RS" "$K219" "$RS"
+if [ -n "$dstr" ]; then printf '  %s%s%s\n' "$K60" "$dstrc" "$RS"; fi
+printf '\n'
+
+raw=""
+if [ "$SLOW" = "0" ]; then
+  raw=$(bounded cat /proc/uptime /proc/meminfo /etc/os-release 2>/dev/null)
+  if [ $? -ge 124 ]; then : > "$NOVA_DIR/slow"; raw=""; fi
 fi
+
+secs=""; mt=""; ma=""; mf=""; osn=""; osv=""
+while IFS= read -r line; do
+  case $line in
+    MemTotal:*)     set -- $line; mt=$2 ;;
+    MemAvailable:*) set -- $line; ma=$2 ;;
+    MemFree:*)      set -- $line; mf=$2 ;;
+    NAME=*)         osn=${line#NAME=} ;;
+    VERSION_ID=*)   osv=${line#VERSION_ID=} ;;
+    [0-9]*)         if [ -z "$secs" ]; then secs=${line%%.*}; fi ;;
+  esac
+done <<EOF
+$raw
+EOF
 
 up=""
-if [ -r /proc/uptime ]; then
-  read -r secs _ < /proc/uptime
-  secs=${secs%%.*}
-  case $secs in
-    ''|*[!0-9]*) ;;
-    *)
-      dd=$((secs / 86400)); hh=$((secs % 86400 / 3600)); mm=$((secs % 3600 / 60))
-      if [ "$dd" -gt 0 ]; then up="up ${dd}d ${hh}h"
-      elif [ "$hh" -gt 0 ]; then up="up ${hh}h ${mm}m"
-      else up="up ${mm}m"; fi ;;
-  esac
-fi
+case $secs in
+  ''|*[!0-9]*) ;;
+  *)
+    dd=$((secs / 86400)); hh=$((secs % 86400 / 3600)); mm=$((secs % 3600 / 60))
+    if [ "$dd" -gt 0 ]; then up="up ${dd}d ${hh}h"
+    elif [ "$hh" -gt 0 ]; then up="up ${hh}h ${mm}m"
+    else up="up ${mm}m"; fi ;;
+esac
 
 mem=""
-if [ -r /proc/meminfo ]; then
-  mt=""; ma=""; mf=""
-  while read -r k v _; do
-    case $k in
-      MemTotal:)     mt=$v ;;
-      MemAvailable:) ma=$v ;;
-      MemFree:)      mf=$v ;;
-    esac
-    if [ -n "$mt" ] && [ -n "$ma" ]; then break; fi
-  done < /proc/meminfo
-  [ -z "$ma" ] && ma=$mf
-  case $mt in ''|*[!0-9]*) mt="" ;; esac
-  case $ma in ''|*[!0-9]*) ma="" ;; esac
-  if [ -n "$mt" ] && [ -n "$ma" ] && [ "$mt" -gt 0 ]; then
-    mem="$(( (mt - ma) / 1024 ))M/$(( mt / 1024 ))M"
-  fi
+[ -z "$ma" ] && ma=$mf
+case $mt in ''|*[!0-9]*) mt="" ;; esac
+case $ma in ''|*[!0-9]*) ma="" ;; esac
+if [ -n "$mt" ] && [ -n "$ma" ] && [ "$mt" -gt 0 ]; then
+  mem="$(( (mt - ma) / 1024 ))M/$(( mt / 1024 ))M"
+fi
+
+os=""
+if [ -n "$osn" ]; then
+  osn=${osn#\"}; osn=${osn%\"}
+  osv=${osv#\"}; osv=${osv%\"}
+  os="${osn}${osv:+ $osv}"
 fi
 
 disk=""
@@ -277,27 +331,24 @@ disk=""
 
 case $sec in [0-9][0-9]) ;; *) sec=00 ;; esac
 case $(( 1$sec % 6 )) in
-  0) tip="update    refresh all packages" ;;
-  1) tip="serve     http server on :8000" ;;
-  2) tip="gs        git status, short" ;;
-  3) tip="myip      show your public IP" ;;
-  4) tip="weather   forecast for $NOVA_CITY" ;;
-  *) tip="nova      show this screen again" ;;
+  0) tip="ᴜᴘᴅᴀᴛᴇ    ʀᴇꜰʀᴇꜱʜ ᴀʟʟ ᴘᴀᴄᴋᴀɢᴇꜱ" ;;
+  1) tip="ꜱᴇʀᴠᴇ     ʜᴛᴛᴘ ꜱᴇʀᴠᴇʀ ᴏɴ :8000" ;;
+  2) tip="ɢꜱ        ɢɪᴛ ꜱᴛᴀᴛᴜꜱ, ꜱʜᴏʀᴛ" ;;
+  3) tip="ᴍʏɪᴘ      ꜱʜᴏᴡ ʏᴏᴜʀ ᴘᴜʙʟɪᴄ IP" ;;
+  4) sc "$NOVA_CITY"; tip="ᴡᴇᴀᴛʜᴇʀ   ꜰᴏʀᴇᴄᴀꜱᴛ ꜰᴏʀ $SC" ;;
+  *) tip="ɴᴏᴠᴀ      ꜱʜᴏᴡ ᴛʜɪꜱ ꜱᴄʀᴇᴇɴ ᴀɢᴀɪɴ" ;;
 esac
 
-join "$os" "$up"; sys=$out
-join "$mem" "$disk"; ram=$out
+join "$os" "$up"; sc "$out"; sys=$SC
+join "$mem" "$disk"; sc "$out"; ram=$SC
+sc "$NOVA_SITE"; site=$SC
+sc "$NOVA_GITHUB"; gh=$SC
 
-printf '\n'
-art
-printf '  %s──────────────────────────────%s\n' "$K60" "$RS"
-printf '  %s%s,%s %s%s%s %s✦%s\n' "$K183" "$greet" "$RS" "$BD" "$NOVA_NAME" "$RS" "$K219" "$RS"
-printf '  %s%s%s\n\n' "$K60" "$dstr" "$RS"
-[ -n "$sys" ] && row sys "$sys"
-[ -n "$ram" ] && row ram "$ram"
-row web "$NOVA_SITE"
-row git "$NOVA_GITHUB"
-printf '\n  %stip ›%s %s%s%s\n\n' "$K99" "$RS" "$K183" "$tip" "$RS"
+if [ -n "$sys" ]; then row "ꜱʏꜱ" "$sys"; fi
+if [ -n "$ram" ]; then row "ʀᴀᴍ" "$ram"; fi
+row "ᴡᴇʙ" "$site"
+row "ɢɪᴛ" "$gh"
+printf '\n  %sᴛɪᴘ ›%s %s%s%s\n\n' "$K99" "$RS" "$K183" "$tip" "$RS"
 
 (sh "$NOVA_DIR/banner.sh" --disk </dev/null >/dev/null 2>&1 &)
 exit 0
@@ -328,10 +379,13 @@ myip()    { curl -fsS https://ifconfig.me; echo; }
 weather() { curl -fsS "https://wttr.in/${1:-${NOVA_CITY:-Kaduna}}?0"; }
 
 __nova_show() {
-  if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then
-    timeout 3 sh "$HOME/.nova/banner.sh" </dev/null
+  if [ -z "${__nova_to:-}" ]; then
+    if command -v timeout >/dev/null 2>&1 && timeout 1 true >/dev/null 2>&1; then __nova_to=1; else __nova_to=0; fi
+  fi
+  if [ "$__nova_to" = "1" ]; then
+    { NOVA_TO=1 timeout 3 sh "$HOME/.nova/banner.sh" </dev/null; } 2>/dev/null
   else
-    sh "$HOME/.nova/banner.sh" </dev/null
+    NOVA_TO=0 sh "$HOME/.nova/banner.sh" </dev/null
   fi
   return 0
 }
@@ -348,10 +402,10 @@ nova() {
     config)     "${EDITOR:-nano}" "$HOME/.nova/config" ;;
     uninstall)  curl -fsSL "${NOVA_SETUP_URL:-https://raw.githubusercontent.com/MrDarkNova/iSH-Setup/main/setup.sh}" | sh -s -- --uninstall ;;
     help|-h|--help)
-      printf 'nova            show the banner\n'
-      printf 'nova update     re-run the installer\n'
-      printf 'nova config     edit name / timezone / links\n'
-      printf 'nova uninstall  remove the Nova look\n' ;;
+      printf 'nova            ꜱʜᴏᴡ ᴛʜᴇ ʙᴀɴɴᴇʀ\n'
+      printf 'nova update     ʀᴇ-ʀᴜɴ ᴛʜᴇ ɪɴꜱᴛᴀʟʟᴇʀ\n'
+      printf 'nova config     ᴇᴅɪᴛ ɴᴀᴍᴇ / ᴛɪᴍᴇᴢᴏɴᴇ / ʟɪɴᴋꜱ\n'
+      printf 'nova uninstall  ʀᴇᴍᴏᴠᴇ ᴛʜᴇ Nᴏᴠᴀ ʟᴏᴏᴋ\n' ;;
     *)          __nova_show ;;
   esac
 }
@@ -389,7 +443,7 @@ __nova_prompt() {
   local mark="$v3" br="" ex=""
   [ -n "$__nova_br" ] && br="${dm}─[${v3}⎇ ${__nova_br}${dm}]"
   if [ "$ec" -ne 0 ]; then mark="$rd"; ex="${dm}─[${rd}✘ ${ec}${dm}]"; fi
-  PS1="\n${dm}╭─[${v1}nova${dm}]─[${v2}\w${dm}]${br}${ex}${rs}\n${dm}╰─${mark}❯${rs} "
+  PS1="\n${dm}╭─[${v1}ɴᴏᴠᴀ${dm}]─[${v2}\w${dm}]${br}${ex}${rs}\n${dm}╰─${mark}❯${rs} "
 }
 PROMPT_COMMAND=__nova_prompt
 NOVA_PROMPT
@@ -445,10 +499,10 @@ set autoindent
 include "/usr/share/nano/*.nanorc"
 # <<< nova-ish <<<
 NOVA_NANORC
-ok "banner, prompt, aliases and config installed"
+ok "ʙᴀɴɴᴇʀ, ᴘʀᴏᴍᴘᴛ, ᴀʟɪᴀꜱᴇꜱ ᴀɴᴅ ᴄᴏɴꜰɪɢ ɪɴꜱᴛᴀʟʟᴇᴅ"
 
 if [ -w "$NOVA_ETC/motd" ] || [ ! -e "$NOVA_ETC/motd" ]; then
-  : > "$NOVA_ETC/motd" 2>/dev/null && ok "default welcome message cleared"
+  : > "$NOVA_ETC/motd" 2>/dev/null && ok "ᴅᴇꜰᴀᴜʟᴛ ᴡᴇʟᴄᴏᴍᴇ ᴍᴇꜱꜱᴀɢᴇ ᴄʟᴇᴀʀᴇᴅ"
 fi
 
 if command -v git >/dev/null 2>&1; then
@@ -456,13 +510,13 @@ if command -v git >/dev/null 2>&1; then
   git config --global pull.rebase false
   git config --global core.editor nano
   git config --global color.ui auto
-  ok "git defaults set"
+  ok "ɢɪᴛ ᴅᴇꜰᴀᴜʟᴛꜱ ꜱᴇᴛ"
 fi
 
 run_banner
-printf '  %s✔ All set.%s Close and reopen iSH, or run: %sexec bash -l%s\n' "$GR" "$RS" "$V3" "$RS"
+printf '  %s✔ Aʟʟ ꜱᴇᴛ.%s Cʟᴏꜱᴇ ᴀɴᴅ ʀᴇᴏᴘᴇɴ ɪSH, ᴏʀ ʀᴜɴ: %sexec bash -l%s\n' "$GR" "$RS" "$V3" "$RS"
 if command -v git >/dev/null 2>&1 && [ -z "$(git config --global user.name 2>/dev/null)" ]; then
-  printf '  %sgit identity not set yet:%s\n' "$DM" "$RS"
+  printf '  %sɢɪᴛ ɪᴅᴇɴᴛɪᴛʏ ɴᴏᴛ ꜱᴇᴛ ʏᴇᴛ:%s\n' "$DM" "$RS"
   printf '    git config --global user.name "Your Name"\n'
   printf '    git config --global user.email "you@example.com"\n'
 fi
